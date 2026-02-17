@@ -6,35 +6,303 @@
 <title>Pica y Fija</title>
 
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
+body{
+margin:0;
+font-family:Arial, sans-serif;
+overflow:hidden;
+color:white;
 }
 
-.screen {
-    width: 100vw;
-    height: 100vh;
-    position: absolute;
-    transition: transform 0.4s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
-    color: white;
+/* FONDO CON NÚMEROS */
+.background{
+position:absolute;
+width:100%;
+height:100%;
+overflow:hidden;
+z-index:0;
 }
 
-#menuScreen {
-    background: linear-gradient(135deg, #ff9966, #ff5e62);
-    justify-content: center;
+.background span{
+position:absolute;
+font-weight:bold;
+opacity:0.08;
 }
 
-#screen1 {
-    background: linear-gradient(135deg, #ff512f, #dd2476);
-    transform: translateX(100%);
+.screen{
+position:absolute;
+width:100%;
+height:100%;
+top:0;
+left:100%;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+transition:0.5s;
+padding:20px;
+box-sizing:border-box;
+z-index:1;
 }
 
+.active{ left:0; }
+
+#menu{
+background:linear-gradient(135deg,#ff9966,#ff5e62);
+}
+
+#screen1{
+background:linear-gradient(135deg,#ff512f,#dd2476);
+}
+
+#screen2{
+background:linear-gradient(135deg,#8e2de2,#ff6a00);
+}
+
+/* LOGO */
+.logo{
+font-size:48px;
+font-weight:bold;
+text-align:center;
+margin-bottom:20px;
+}
+
+.logo span{
+color:#ffd700;
+}
+
+input{
+padding:10px;
+font-size:20px;
+width:150px;
+text-align:center;
+border:none;
+border-radius:10px;
+margin:5px;
+}
+
+button{
+padding:10px 20px;
+font-size:16px;
+border:none;
+border-radius:20px;
+margin:5px;
+background:#fff;
+color:#ff4e50;
+cursor:pointer;
+}
+
+.history{
+margin-top:15px;
+max-height:200px;
+overflow:auto;
+background:rgba(255,255,255,0.2);
+padding:10px;
+border-radius:10px;
+width:90%;
+}
+
+.bottom-btn{
+position:absolute;
+bottom:20px;
+}
+
+.left-btn{
+position:absolute;
+bottom:20px;
+left:20px;
+}
+
+.right-btn{
+position:absolute;
+bottom:20px;
+right:20px;
+}
+
+.overlay{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.85);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
+z-index:10;
+display:none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+<div class="background" id="bgMenu"></div>
+<div class="logo">🎯 PICA <span>Y</span> FIJA 007</div>
+<h2>Elegí tu número</h2>
+<input type="text" id="myNumber" maxlength="4" placeholder="0000">
+<button onclick="startGame()">Aceptar</button>
+</div>
+
+<!-- PANTALLA 1 -->
+<div id="screen1" class="screen">
+<div class="background" id="bg1"></div>
+<h1>Tu intento</h1>
+<button onclick="toggleNumber()">Mostrar / Ocultar</button>
+<h2 id="displayNumber">****</h2>
+
+<input type="text" id="guess1" maxlength="4" placeholder="Número">
+<input type="number" id="picas1" placeholder="P">
+<input type="number" id="fijas1" placeholder="F">
+<button onclick="addHistory1()">Guardar</button>
+
+<div class="history" id="history1"></div>
+
+<button class="left-btn" onclick="finishGame()">Finalizar juego</button>
+<button class="right-btn" onclick="goTo(2)">➡</button>
+</div>
+
+<!-- PANTALLA 2 -->
+<div id="screen2" class="screen">
+<div class="background" id="bg2"></div>
+<h1>Intento rival</h1>
+<button onclick="toggleNumber()">Mostrar / Ocultar</button>
+<h2 id="displayNumber2">****</h2>
+
+<input type="text" id="guess2" maxlength="4" placeholder="Número rival">
+<button onclick="checkRival()">Verificar</button>
+
+<div class="history" id="history2"></div>
+
+<button class="left-btn" onclick="finishGame()">Finalizar juego</button>
+<button class="right-btn" onclick="goTo(1)">⬅</button>
+</div>
+
+<!-- OVERLAY -->
+<div id="overlay" class="overlay">
+<h1 id="resultMessage"></h1>
+<button onclick="resetGame()">Volver al menú</button>
+</div>
+
+<script>
+let myNumber="";
+let visible=false;
+
+/* GENERAR NÚMEROS DECORATIVOS */
+function generateBackground(id){
+let container=document.getElementById(id);
+for(let i=0;i<40;i++){
+let span=document.createElement("span");
+span.innerText=Math.floor(Math.random()*10);
+span.style.fontSize=(20+Math.random()*120)+"px";
+span.style.top=Math.random()*100+"%";
+span.style.left=Math.random()*100+"%";
+container.appendChild(span);
+}
+}
+generateBackground("bgMenu");
+generateBackground("bg1");
+generateBackground("bg2");
+
+function startGame(){
+let num=document.getElementById("myNumber").value;
+if(num.length!==4){alert("Debe tener 4 cifras");return;}
+myNumber=num;
+document.getElementById("menu").classList.remove("active");
+document.getElementById("screen1").classList.add("active");
+}
+
+function goTo(n){
+document.getElementById("screen1").classList.remove("active");
+document.getElementById("screen2").classList.remove("active");
+if(n===1) document.getElementById("screen1").classList.add("active");
+if(n===2) document.getElementById("screen2").classList.add("active");
+}
+
+function toggleNumber(){
+visible=!visible;
+let text=visible?myNumber:"****";
+document.getElementById("displayNumber").innerText=text;
+document.getElementById("displayNumber2").innerText=text;
+}
+
+function addHistory1(){
+let guess=document.getElementById("guess1").value;
+let p=document.getElementById("picas1").value;
+let f=document.getElementById("fijas1").value;
+if(guess.length!==4)return;
+
+let div=document.createElement("div");
+div.innerText=`${guess} → ${p}P ${f}F`;
+document.getElementById("history1").appendChild(div);
+
+if(f==4){
+showOverlay("🎉 ¡Felicitaciones! Adivinaste el número 🎉");
+}
+}
+
+function checkRival(){
+let guess=document.getElementById("guess2").value;
+if(guess.length!==4)return;
+
+let result=calculate(guess,myNumber);
+
+let div=document.createElement("div");
+div.innerText=`${guess} → ${result.picas}P ${result.fijas}F`;
+document.getElementById("history2").appendChild(div);
+
+if(result.fijas===4){
+showOverlay("💀 Lo sentimos, perdiste. Adivinaron tu número");
+}
+}
+
+function calculate(a,b){
+let fijas=0;
+let picas=0;
+let usedA=[false,false,false,false];
+let usedB=[false,false,false,false];
+
+for(let i=0;i<4;i++){
+if(a[i]===b[i]){
+fijas++;
+usedA[i]=true;
+usedB[i]=true;
+}
+}
+
+for(let i=0;i<4;i++){
+if(!usedA[i]){
+for(let j=0;j<4;j++){
+if(!usedB[j] && a[i]===b[j]){
+picas++;
+usedB[j]=true;
+break;
+}
+}
+}
+}
+return{picas,fijas};
+}
+
+function showOverlay(text){
+document.getElementById("resultMessage").innerText=text;
+document.getElementById("overlay").style.display="flex";
+}
+
+function finishGame(){
+showOverlay("Juego finalizado.");
+}
+
+function resetGame(){
+location.reload();
+}
+</script>
+
+</body>
+</html>
 #screen2 {
     background: linear-gradient(135deg, #8e2de2, #ff6a00);
     transform: translateX(200%);
