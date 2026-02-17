@@ -11,6 +11,9 @@
     padding:0;
     box-sizing:border-box;
     font-family:Arial, Helvetica, sans-serif;
+    -webkit-user-select:none;
+    -ms-user-select:none;
+    user-select:none;
 }
 
 body{
@@ -18,18 +21,179 @@ body{
     background:#ff7a18;
 }
 
-/* ---- DECORACIÓN NUMÉRICA ---- */
+/* ---- CAPA DECORATIVA REAL ---- */
 .decoracion{
-    position:absolute;
-    width:100%;
-    height:100%;
+    position:fixed;
     top:0;
     left:0;
-    z-index:0;
+    width:100%;
+    height:100%;
+    z-index:-1; /* CLAVE */
     pointer-events:none;
-    user-select:none;
 }
 
+.numero-bg{
+    position:absolute;
+    font-weight:bold;
+    opacity:0.06;
+    pointer-events:none;
+}
+
+/* ---- CONTENIDO ---- */
+.pantalla{
+    position:absolute;
+    width:100%;
+    height:100vh;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    padding:20px;
+    z-index:10;
+}
+
+.activa{
+    display:flex;
+}
+
+/* COLORES */
+.menu{
+    background:linear-gradient(135deg,#ff512f,#f09819);
+}
+
+.juego{
+    background:linear-gradient(135deg,#36d1dc,#5b86e5);
+}
+
+h1{
+    color:white;
+    margin-bottom:20px;
+}
+
+input{
+    padding:12px;
+    font-size:20px;
+    border:none;
+    border-radius:10px;
+    text-align:center;
+    margin-top:15px;
+}
+
+button{
+    margin-top:15px;
+    padding:12px 25px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#ffd200;
+    cursor:pointer;
+}
+
+button:active{
+    transform:scale(0.95);
+}
+
+.mensaje{
+    margin-top:20px;
+    font-size:20px;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="decoracion" id="decoracion"></div>
+
+<!-- MENU -->
+<div class="pantalla activa menu" id="menu">
+    <h1>🎯 PICA Y FIJA 007</h1>
+    <p style="color:white;">Elegí tu número</p>
+    <input type="tel" id="numeroJugador" maxlength="4" placeholder="0000">
+    <button onclick="iniciarJuego()">Aceptar</button>
+</div>
+
+<!-- JUEGO -->
+<div class="pantalla juego" id="juego">
+    <h1>Turno rival</h1>
+    <input type="tel" id="intentoRival" maxlength="4" placeholder="Número que dicen">
+    <button onclick="calcular()">Calcular</button>
+    <div class="mensaje" id="resultado"></div>
+    <button onclick="reiniciar()">Finalizar Juego</button>
+</div>
+
+<script>
+let numeroSecreto="";
+
+function iniciarJuego(){
+    const num=document.getElementById("numeroJugador").value;
+    if(num.length!==4){ alert("Debe tener 4 cifras"); return;}
+    numeroSecreto=num;
+    document.getElementById("menu").classList.remove("activa");
+    document.getElementById("juego").classList.add("activa");
+}
+
+function calcular(){
+    const intento=document.getElementById("intentoRival").value;
+    if(intento.length!==4)return;
+
+    let fijas=0;
+    let picas=0;
+
+    let usadoSecreto=[false,false,false,false];
+    let usadoIntento=[false,false,false,false];
+
+    for(let i=0;i<4;i++){
+        if(intento[i]===numeroSecreto[i]){
+            fijas++;
+            usadoSecreto[i]=true;
+            usadoIntento[i]=true;
+        }
+    }
+
+    for(let i=0;i<4;i++){
+        if(usadoIntento[i])continue;
+        for(let j=0;j<4;j++){
+            if(!usadoSecreto[j] && intento[i]===numeroSecreto[j]){
+                picas++;
+                usadoSecreto[j]=true;
+                break;
+            }
+        }
+    }
+
+    document.getElementById("resultado").innerText=
+        picas+" Picas - "+fijas+" Fijas";
+
+    if(fijas===4){
+        alert("Lo sentimos, perdiste. Adivinaron tu número.");
+    }
+}
+
+function reiniciar(){
+    location.reload();
+}
+
+/* DECORACIÓN SEGURA */
+function crearDecoracion(){
+    const cont=document.getElementById("decoracion");
+    for(let i=0;i<25;i++){
+        const span=document.createElement("span");
+        span.className="numero-bg";
+        span.innerText=Math.floor(Math.random()*10);
+        span.style.fontSize=(Math.random()*120+40)+"px";
+        span.style.top=Math.random()*100+"%";
+        span.style.left=Math.random()*100+"%";
+        span.style.color="white";
+        cont.appendChild(span);
+    }
+}
+
+crearDecoracion();
+</script>
+
+</body>
+</html>
 .numero-bg{
     position:absolute;
     font-weight:bold;
