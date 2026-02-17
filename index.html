@@ -232,3 +232,63 @@ function calculate() {
     let picas = 0;
 
     let usedMy = [false,false,false,false];
+    let usedGuess = [false,false,false,false];
+
+    for (let i = 0; i < 4; i++) {
+        if (guess[i] === myNumber[i]) {
+            fijas++;
+            usedMy[i] = true;
+            usedGuess[i] = true;
+        }
+    }
+
+    for (let i = 0; i < 4; i++) {
+        if (usedGuess[i]) continue;
+        for (let j = 0; j < 4; j++) {
+            if (!usedMy[j] && guess[i] === myNumber[j]) {
+                picas++;
+                usedMy[j] = true;
+                break;
+            }
+        }
+    }
+
+    let div = document.createElement("div");
+    div.className = "history-item";
+    div.innerText = guess + " → F: " + fijas + " | P: " + picas;
+    document.getElementById("history2").appendChild(div);
+
+    document.getElementById("guess2").value = "";
+
+    if (fijas === 4) {
+        showVictory();
+    }
+}
+
+function showVictory() {
+    document.getElementById("victoryScreen").style.display = "flex";
+}
+
+function finishGame() {
+    resetGame();
+}
+
+function resetGame() {
+    myNumber = "";
+    visible = false;
+    gameActive = false;
+
+    document.getElementById("menuNumber").value = "";
+    document.getElementById("history1").innerHTML = "";
+    document.getElementById("history2").innerHTML = "";
+    document.getElementById("victoryScreen").style.display = "none";
+
+    document.getElementById("menuScreen").style.transform = "translateX(0)";
+    document.getElementById("screen1").style.transform = "translateX(100%)";
+    document.getElementById("screen2").style.transform = "translateX(200%)";
+}
+
+</script>
+
+</body>
+</html>
