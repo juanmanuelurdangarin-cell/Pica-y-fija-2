@@ -16,140 +16,178 @@ body {
     width: 100vw;
     height: 100vh;
     position: absolute;
-    transition: transform 0.5s ease;
+    transition: transform 0.4s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 40px;
+    padding: 20px;
     box-sizing: border-box;
     color: white;
 }
 
+#menuScreen {
+    background: linear-gradient(135deg, #ff9966, #ff5e62);
+    justify-content: center;
+}
+
 #screen1 {
     background: linear-gradient(135deg, #ff512f, #dd2476);
+    transform: translateX(100%);
 }
 
 #screen2 {
     background: linear-gradient(135deg, #8e2de2, #ff6a00);
-    transform: translateX(100%);
+    transform: translateX(200%);
 }
 
-button {
-    padding: 10px 20px;
-    margin: 5px;
-    border: none;
-    border-radius: 8px;
-    background: #ffd700;
-    font-weight: bold;
+h2 {
+    margin: 10px 0;
 }
 
 input {
-    padding: 8px;
+    padding: 10px;
     font-size: 18px;
     text-align: center;
-    width: 120px;
+    width: 140px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
 }
 
-#menu {
+button {
+    padding: 12px 20px;
+    margin: 8px;
+    border: none;
+    border-radius: 10px;
+    background: #ffd700;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.bottom-button {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    bottom: 20px;
 }
 
-.hidden {
-    display: none;
+.left-bottom {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
 }
 
-#history {
+.right-top {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+#history1, #history2 {
+    width: 90%;
     max-height: 200px;
     overflow-y: auto;
     margin-top: 10px;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.history-item {
+    margin-bottom: 5px;
+}
+
+#victoryScreen {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, #ffdd00, #ff5e62);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+    text-align: center;
 }
 </style>
 </head>
 
 <body>
 
-<!-- Pantalla inicial -->
-<div id="startScreen" class="screen" style="background: linear-gradient(135deg,#ff9966,#ff5e62);">
+<!-- MENÚ -->
+<div id="menuScreen" class="screen">
     <h2>Elegí tu número</h2>
-    <input id="myNumberInput" maxlength="4" placeholder="0000">
-    <br>
-    <label>Intentos:</label>
-    <select id="attemptLimit">
-        <option value="8">8</option>
-        <option value="9">9</option>
-        <option value="10">10</option>
-        <option value="0">Sin límite</option>
-    </select>
-    <br><br>
-    <button onclick="startGame()">Aceptar</button>
+    <input id="menuNumber" maxlength="4" placeholder="0000">
+    <button class="bottom-button" onclick="startGame()">ACEPTAR</button>
 </div>
 
-<!-- Pantalla 1 -->
+<!-- PANTALLA 1 -->
 <div id="screen1" class="screen">
-    <div id="menu">
-        <button onclick="toggleHistory()">Historial</button>
-        <button onclick="goToScreen2()">➡</button>
-    </div>
-
-    <h2>Tu número: <span id="myNumber">****</span></h2>
-    <button onclick="toggleNumber()">Mostrar/Ocultar</button>
+    <button class="right-top" onclick="goToScreen2()">➡</button>
+    <h2>Tu número: <span id="displayNumber1">****</span></h2>
+    <button onclick="toggleNumber()">Mostrar / Ocultar</button>
 
     <h3>Intento al rival</h3>
     <input id="guess1" maxlength="4" placeholder="0000">
     <input id="fijas1" placeholder="F">
     <input id="picas1" placeholder="P">
-    <button onclick="addHistory1()">Guardar</button>
+    <button onclick="addManualHistory()">Guardar</button>
 
-    <div id="history" class="hidden"></div>
+    <div id="history1"></div>
 </div>
 
-<!-- Pantalla 2 -->
+<!-- PANTALLA 2 -->
 <div id="screen2" class="screen">
-    <div id="menu">
-        <button onclick="goToScreen1()">⬅</button>
-    </div>
+    <button class="right-top" onclick="goToScreen1()">⬅</button>
+    <button class="left-bottom" onclick="finishGame()">Finalizar Juego</button>
 
-    <h2>Tu número: <span id="myNumber2">****</span></h2>
-    <button onclick="toggleNumber()">Mostrar/Ocultar</button>
+    <h2>Tu número: <span id="displayNumber2">****</span></h2>
+    <button onclick="toggleNumber()">Mostrar / Ocultar</button>
 
     <h3>Número del rival</h3>
-    <input id="guess2" maxlength="4" placeholder="0000" oninput="calculate()">
-    <h3 id="result"></h3>
+    <input id="guess2" maxlength="4" placeholder="0000" onkeydown="handleEnter(event)">
+
+    <div id="history2"></div>
+</div>
+
+<!-- VICTORIA -->
+<div id="victoryScreen">
+    <h1>🎉 ¡FELICITACIONES! 🎉</h1>
+    <h2>¡Adivinaste el número!</h2>
+    <button onclick="resetGame()">Volver al menú</button>
 </div>
 
 <script>
 
 let myNumber = "";
-let attempts = 0;
-let limit = 0;
-let numberVisible = false;
+let visible = false;
+let gameActive = false;
 
 function startGame() {
-    let input = document.getElementById("myNumberInput").value;
-    if (input.length !== 4 || isNaN(input)) {
+    let num = document.getElementById("menuNumber").value;
+
+    if (num.length !== 4 || isNaN(num)) {
         alert("Debe ser un número de 4 cifras");
         return;
     }
 
-    myNumber = input;
-    limit = parseInt(document.getElementById("attemptLimit").value);
-    document.getElementById("startScreen").style.display = "none";
+    myNumber = num;
+    gameActive = true;
+
+    document.getElementById("menuScreen").style.transform = "translateX(-100%)";
     document.getElementById("screen1").style.transform = "translateX(0)";
     document.getElementById("screen2").style.transform = "translateX(100%)";
-    updateNumberDisplay();
+
+    updateDisplay();
 }
 
 function toggleNumber() {
-    numberVisible = !numberVisible;
-    updateNumberDisplay();
+    visible = !visible;
+    updateDisplay();
 }
 
-function updateNumberDisplay() {
-    let display = numberVisible ? myNumber : "****";
-    document.getElementById("myNumber").innerText = display;
-    document.getElementById("myNumber2").innerText = display;
+function updateDisplay() {
+    let value = visible ? myNumber : "****";
+    document.getElementById("displayNumber1").innerText = value;
+    document.getElementById("displayNumber2").innerText = value;
 }
 
 function goToScreen2() {
@@ -162,7 +200,7 @@ function goToScreen1() {
     document.getElementById("screen2").style.transform = "translateX(100%)";
 }
 
-function addHistory1() {
+function addManualHistory() {
     let guess = document.getElementById("guess1").value;
     let f = document.getElementById("fijas1").value;
     let p = document.getElementById("picas1").value;
@@ -170,14 +208,20 @@ function addHistory1() {
     if (guess.length !== 4) return;
 
     let div = document.createElement("div");
-    div.innerText = guess + " → Fijas: " + f + " | Picas: " + p;
-    document.getElementById("history").appendChild(div);
+    div.className = "history-item";
+    div.innerText = guess + " → F: " + f + " | P: " + p;
 
-    attempts++;
+    document.getElementById("history1").appendChild(div);
+
+    document.getElementById("guess1").value = "";
+    document.getElementById("fijas1").value = "";
+    document.getElementById("picas1").value = "";
 }
 
-function toggleHistory() {
-    document.getElementById("history").classList.toggle("hidden");
+function handleEnter(e) {
+    if (e.key === "Enter") {
+        calculate();
+    }
 }
 
 function calculate() {
@@ -188,35 +232,3 @@ function calculate() {
     let picas = 0;
 
     let usedMy = [false,false,false,false];
-    let usedGuess = [false,false,false,false];
-
-    for (let i = 0; i < 4; i++) {
-        if (guess[i] === myNumber[i]) {
-            fijas++;
-            usedMy[i] = true;
-            usedGuess[i] = true;
-        }
-    }
-
-    for (let i = 0; i < 4; i++) {
-        if (usedGuess[i]) continue;
-        for (let j = 0; j < 4; j++) {
-            if (!usedMy[j] && guess[i] === myNumber[j]) {
-                picas++;
-                usedMy[j] = true;
-                break;
-            }
-        }
-    }
-
-    document.getElementById("result").innerText =
-        "Fijas: " + fijas + " | Picas: " + picas;
-
-    if (fijas === 4) {
-        alert("¡Ganaron!");
-    }
-}
-
-</script>
-</body>
-</html>
