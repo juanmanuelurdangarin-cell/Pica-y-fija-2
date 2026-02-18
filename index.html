@@ -11,7 +11,6 @@
   padding:0;
   box-sizing:border-box;
   font-family:Arial, sans-serif;
-  user-select:none;
 }
 
 body{
@@ -48,13 +47,11 @@ body{
   display:flex;
 }
 
-/* Limitar ancho en PC */
 .pantalla > *{
   width:100%;
   max-width:500px;
 }
 
-/* Gradientes */
 .menu{
   background:linear-gradient(135deg,#ff512f,#f09819);
   color:white;
@@ -74,7 +71,6 @@ body{
 
 h1{
   margin-bottom:15px;
-  text-align:center;
 }
 
 input{
@@ -95,11 +91,6 @@ button{
   border-radius:8px;
   background:#ffd200;
   cursor:pointer;
-  transition:0.2s;
-}
-
-button:hover{
-  transform:scale(1.03);
 }
 
 .nav{
@@ -117,7 +108,6 @@ button:hover{
   margin-top:8px;
   border-radius:6px;
   text-align:center;
-  font-size:16px;
 }
 
 /* Botón finalizar */
@@ -129,6 +119,7 @@ button:hover{
   color:white;
   z-index:5;
   padding:12px 18px;
+  display:none;
 }
 
 /* Modal */
@@ -152,28 +143,9 @@ button:hover{
   max-width:400px;
 }
 
-.modal-content button{
-  margin:10px;
-}
-
 .rojo{
   color:red;
   font-weight:bold;
-}
-
-/* Ajustes PC */
-@media (min-width:768px){
-  input{
-    font-size:20px;
-  }
-
-  button{
-    font-size:18px;
-  }
-
-  .item{
-    font-size:18px;
-  }
 }
 </style>
 </head>
@@ -187,7 +159,7 @@ button:hover{
   <h1>🎯 PICA Y FIJA</h1>
   <p>Elegí tu número secreto</p>
   <input type="tel" id="numeroJugador" maxlength="4" placeholder="0000">
-  <button onclick="iniciarJuego()">Aceptar</button>
+  <button id="btnAceptar">Aceptar</button>
 </div>
 
 <!-- PANTALLA 1 -->
@@ -221,7 +193,7 @@ button:hover{
 </div>
 
 <!-- BOTÓN FINALIZAR -->
-<button class="finalizar-btn" onclick="abrirModal()">Finalizar Juego</button>
+<button class="finalizar-btn" id="btnFinalizar">Finalizar Juego</button>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
@@ -235,9 +207,23 @@ button:hover{
 <script>
 let numeroSecreto="";
 
-/* Iniciar */
+const inputNumero = document.getElementById("numeroJugador");
+const btnAceptar = document.getElementById("btnAceptar");
+const btnFinalizar = document.getElementById("btnFinalizar");
+
+/* ENTER funciona como aceptar */
+inputNumero.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    iniciarJuego();
+  }
+});
+
+btnAceptar.addEventListener("click", iniciarJuego);
+
+btnFinalizar.addEventListener("click", abrirModal);
+
 function iniciarJuego(){
-  const num=document.getElementById("numeroJugador").value;
+  const num=inputNumero.value;
   if(num.length!==4){
     alert("El número debe tener 4 cifras");
     return;
@@ -245,16 +231,15 @@ function iniciarJuego(){
   numeroSecreto=num;
   document.getElementById("menu").classList.remove("activa");
   document.getElementById("pantalla1").classList.add("activa");
+  btnFinalizar.style.display="block";
 }
 
-/* Navegación */
 function mostrarPantalla(num){
   document.getElementById("pantalla1").classList.remove("activa");
   document.getElementById("pantalla2").classList.remove("activa");
   document.getElementById("pantalla"+num).classList.add("activa");
 }
 
-/* Pantalla 1 */
 function agregarIntentoJugador(){
   const num=document.getElementById("intentoJugador").value;
   const p=document.getElementById("picasManual").value;
@@ -276,10 +261,81 @@ function agregarIntentoJugador(){
   document.getElementById("fijasManual").value="";
 }
 
-/* Pantalla 2 */
 function calcular(){
   const intento=document.getElementById("intentoRival").value;
   if(intento.length!==4) return;
 
   let fijas=0;
-  let p
+  let picas=0;
+  let usadoSecreto=[false,false,false,false];
+  let usadoIntento=[false,false,false,false];
+
+  for(let i=0;i<4;i++){
+    if(intento[i]===numeroSecreto[i]){
+      fijas++;
+      usadoSecreto[i]=true;
+      usadoIntento[i]=true;
+    }
+  }
+
+  for(let i=0;i<4;i++){
+    if(usadoIntento[i]) continue;
+    for(let j=0;j<4;j++){
+      if(!usadoSecreto[j] && intento[i]===numeroSecreto[j]){
+        picas++;
+        usadoSecreto[j]=true;
+        break;
+      }
+    }
+  }
+
+  const div=document.createElement("div");
+  div.className="item";
+  div.innerText=intento+" → "+picas+"P "+fijas+"F";
+  document.getElementById("historial2").appendChild(div);
+
+  if(fijas===4){
+    alert("Lo sentimos, perdiste. Adivinaron tu número.");
+  }
+
+  document.getElementById("intentoRival").value="";
+}
+
+function abrirModal(){
+  document.getElementById("modal").style.display="flex";
+}
+
+function cerrarModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+function finalizar(){
+  cerrarModal();
+  numeroSecreto="";
+  inputNumero.value="";
+  document.getElementById("historial1").innerHTML="";
+  document.getElementById("historial2").innerHTML="";
+  document.getElementById("pantalla1").classList.remove("activa");
+  document.getElementById("pantalla2").classList.remove("activa");
+  document.getElementById("menu").classList.add("activa");
+  btnFinalizar.style.display="none";
+}
+
+/* Decoración */
+function crearDecoracion(){
+  const cont=document.getElementById("decoracion");
+  for(let i=0;i<30;i++){
+    const span=document.createElement("span");
+    span.className="numero-bg";
+    span.innerText=Math.floor(Math.random()*10);
+    span.style.fontSize=(Math.random()*120+40)+"px";
+    span.style.top=Math.random()*100+"%";
+    span.style.left=Math.random()*100+"%";
+    cont.appendChild(span);
+  }
+}
+crearDecoracion();
+</script>
+
+</body>
+</html>
