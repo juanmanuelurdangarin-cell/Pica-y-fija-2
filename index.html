@@ -71,6 +71,7 @@ body{
 
 h1{
   margin-bottom:15px;
+  text-align:center;
 }
 
 input{
@@ -108,6 +109,20 @@ button{
   margin-top:8px;
   border-radius:6px;
   text-align:center;
+}
+
+/* Número secreto */
+.secreto-box{
+  margin-bottom:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
+
+.secreto-box button{
+  margin-left:10px;
+  padding:5px 10px;
+  font-size:14px;
 }
 
 /* Botón finalizar */
@@ -164,11 +179,17 @@ button{
 
 <!-- PANTALLA 1 -->
 <div class="pantalla turno1" id="pantalla1">
+
+  <div class="secreto-box">
+    <span id="mostrarNumero1">••••</span>
+    <button onclick="toggleNumero()">Mostrar</button>
+  </div>
+
   <h1>Tu Turno</h1>
 
   <input type="tel" id="intentoJugador" maxlength="4" placeholder="Número que intentás">
-  <input type="number" id="picasManual" placeholder="Picas">
-  <input type="number" id="fijasManual" placeholder="Fijas">
+  <input type="number" id="picasManual" min="0" max="4" placeholder="Picas">
+  <input type="number" id="fijasManual" min="0" max="4" placeholder="Fijas">
   <button onclick="agregarIntentoJugador()">Guardar Intento</button>
 
   <div class="historial" id="historial1"></div>
@@ -180,6 +201,12 @@ button{
 
 <!-- PANTALLA 2 -->
 <div class="pantalla turno2" id="pantalla2">
+
+  <div class="secreto-box">
+    <span id="mostrarNumero2">••••</span>
+    <button onclick="toggleNumero()">Mostrar</button>
+  </div>
+
   <h1>Turno Rival</h1>
 
   <input type="tel" id="intentoRival" maxlength="4" placeholder="Número que dicen">
@@ -192,7 +219,6 @@ button{
   </div>
 </div>
 
-<!-- BOTÓN FINALIZAR -->
 <button class="finalizar-btn" id="btnFinalizar">Finalizar Juego</button>
 
 <!-- MODAL -->
@@ -206,21 +232,19 @@ button{
 
 <script>
 let numeroSecreto="";
+let numeroVisible=false;
 
-const inputNumero = document.getElementById("numeroJugador");
-const btnAceptar = document.getElementById("btnAceptar");
-const btnFinalizar = document.getElementById("btnFinalizar");
+const inputNumero=document.getElementById("numeroJugador");
+const btnAceptar=document.getElementById("btnAceptar");
+const btnFinalizar=document.getElementById("btnFinalizar");
 
-/* ENTER funciona como aceptar */
-inputNumero.addEventListener("keydown", function(e){
-  if(e.key === "Enter"){
-    iniciarJuego();
-  }
+/* ENTER = aceptar */
+inputNumero.addEventListener("keydown",function(e){
+  if(e.key==="Enter") iniciarJuego();
 });
 
-btnAceptar.addEventListener("click", iniciarJuego);
-
-btnFinalizar.addEventListener("click", abrirModal);
+btnAceptar.addEventListener("click",iniciarJuego);
+btnFinalizar.addEventListener("click",abrirModal);
 
 function iniciarJuego(){
   const num=inputNumero.value;
@@ -229,8 +253,14 @@ function iniciarJuego(){
     return;
   }
   numeroSecreto=num;
+  numeroVisible=false;
+
+  document.getElementById("mostrarNumero1").innerText="••••";
+  document.getElementById("mostrarNumero2").innerText="••••";
+
   document.getElementById("menu").classList.remove("activa");
   document.getElementById("pantalla1").classList.add("activa");
+
   btnFinalizar.style.display="block";
 }
 
@@ -240,19 +270,40 @@ function mostrarPantalla(num){
   document.getElementById("pantalla"+num).classList.add("activa");
 }
 
+function toggleNumero(){
+  numeroVisible=!numeroVisible;
+
+  const texto=numeroVisible?numeroSecreto:"••••";
+  const botonTexto=numeroVisible?"Ocultar":"Mostrar";
+
+  document.getElementById("mostrarNumero1").innerText=texto;
+  document.getElementById("mostrarNumero2").innerText=texto;
+
+  document.querySelectorAll(".secreto-box button")
+    .forEach(b=>b.innerText=botonTexto);
+}
+
 function agregarIntentoJugador(){
   const num=document.getElementById("intentoJugador").value;
-  const p=document.getElementById("picasManual").value;
-  const f=document.getElementById("fijasManual").value;
+  let p=parseInt(document.getElementById("picasManual").value)||0;
+  let f=parseInt(document.getElementById("fijasManual").value)||0;
 
-  if(num.length!==4) return;
+  if(num.length!==4){
+    alert("El número debe tener 4 cifras");
+    return;
+  }
+
+  if(p<0||f<0||p>4||f>4||p+f>4){
+    alert("Valores inválidos (0-4 y suma máxima 4)");
+    return;
+  }
 
   const div=document.createElement("div");
   div.className="item";
   div.innerText=num+" → "+p+"P "+f+"F";
   document.getElementById("historial1").appendChild(div);
 
-  if(f==4){
+  if(f===4){
     alert("🎉 FELICITACIONES! Adivinaste el número 🎉");
   }
 
@@ -265,8 +316,7 @@ function calcular(){
   const intento=document.getElementById("intentoRival").value;
   if(intento.length!==4) return;
 
-  let fijas=0;
-  let picas=0;
+  let fijas=0,picas=0;
   let usadoSecreto=[false,false,false,false];
   let usadoIntento=[false,false,false,false];
 
@@ -281,7 +331,7 @@ function calcular(){
   for(let i=0;i<4;i++){
     if(usadoIntento[i]) continue;
     for(let j=0;j<4;j++){
-      if(!usadoSecreto[j] && intento[i]===numeroSecreto[j]){
+      if(!usadoSecreto[j]&&intento[i]===numeroSecreto[j]){
         picas++;
         usadoSecreto[j]=true;
         break;
@@ -312,16 +362,19 @@ function cerrarModal(){
 function finalizar(){
   cerrarModal();
   numeroSecreto="";
+  numeroVisible=false;
+
   inputNumero.value="";
   document.getElementById("historial1").innerHTML="";
   document.getElementById("historial2").innerHTML="";
+
   document.getElementById("pantalla1").classList.remove("activa");
   document.getElementById("pantalla2").classList.remove("activa");
   document.getElementById("menu").classList.add("activa");
+
   btnFinalizar.style.display="none";
 }
 
-/* Decoración */
 function crearDecoracion(){
   const cont=document.getElementById("decoracion");
   for(let i=0;i<30;i++){
